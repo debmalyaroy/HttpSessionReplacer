@@ -26,73 +26,74 @@ import redis.clients.jedis.JedisSentinelPool;
  */
 public class JedisSessionRepositoryFactory extends AbstractRedisSessionRepositoryFactory {
 
-  @Override
-  protected RedisFacade getRedisFacade(RedisConfiguration config) {
-    JedisPoolConfig poolConfig = configurePool(config);
-    switch (config.clusterMode) {
-    case "SINGLE":
-      return singleInstance(poolConfig, config);
-    case "SENTINEL":
-      return sentinelFacade(poolConfig, config);
-    case "CLUSTER":
-      return clusterFacade(poolConfig, config);
-    default:
-      throw new IllegalArgumentException("Unsupported redis mode: " + config);
+    @Override
+    protected RedisFacade getRedisFacade(RedisConfiguration config) {
+        JedisPoolConfig poolConfig = configurePool(config);
+        switch (config.clusterMode) {
+        case "SINGLE":
+            return singleInstance(poolConfig, config);
+        case "SENTINEL":
+            return sentinelFacade(poolConfig, config);
+        case "CLUSTER":
+            return clusterFacade(poolConfig, config);
+        default:
+            throw new IllegalArgumentException("Unsupported redis mode: " + config);
+        }
     }
-  }
 
-  /**
-   * Configures Jedis pool of connection.
-   * 
-   * @param config
-   *
-   * @return configured Jedis pool of connection.
-   */
-  static JedisPoolConfig configurePool(RedisConfiguration config) {
-    JedisPoolConfig poolConfig = new JedisPoolConfig();
-    poolConfig.setMaxTotal(Integer.parseInt(config.poolSize));
-    poolConfig.setMaxIdle(Math.min(poolConfig.getMaxIdle(), poolConfig.getMaxTotal()));
-    poolConfig.setMinIdle(Math.min(poolConfig.getMinIdle(), poolConfig.getMaxIdle()));
-    return poolConfig;
-  }
-
-  private RedisFacade singleInstance(JedisPoolConfig poolConfig, RedisConfiguration config) {
-    int port = Integer.parseInt(config.port);
-    String[] serverAndPort = config.server.split(":");
-    if (serverAndPort.length > 1) {
-      port = Integer.parseInt(serverAndPort[1]);
+    /**
+     * Configures Jedis pool of connection.
+     * 
+     * @param config
+     *
+     * @return configured Jedis pool of connection.
+     */
+    static JedisPoolConfig configurePool(RedisConfiguration config) {
+        JedisPoolConfig poolConfig = new JedisPoolConfig();
+        poolConfig.setMaxTotal(Integer.parseInt(config.poolSize));
+        poolConfig.setMaxIdle(Math.min(poolConfig.getMaxIdle(), poolConfig.getMaxTotal()));
+        poolConfig.setMinIdle(Math.min(poolConfig.getMinIdle(), poolConfig.getMaxIdle()));
+        return poolConfig;
     }
-    return new JedisPoolFacade(new JedisPool(poolConfig, config.server, port, config.timeout));
-  }
 
-  RedisFacade sentinelFacade(JedisPoolConfig poolConfig, RedisConfiguration config) {
-    return new JedisPoolFacade(
-        new JedisSentinelPool(config.masterName, config.sentinels(), poolConfig, config.timeout));
-  }
-
-  /**
-   * This method builds RedisFacade that connects to Redis cluster. We retrieve
-   * all IP addresses corresponding to passed DNS name and use them as cluster
-   * nodes.
-   *
-   * @param poolConfig
-   * @param config
-   * @return
-   */
-  RedisFacade clusterFacade(JedisPoolConfig poolConfig, RedisConfiguration config) {
-    return new JedisClusterFacade(
-        new TransactionalJedisCluster(jedisHostsAndPorts(config), config.timeout, poolConfig));
-  }
-
-  /**
-   * Extracts jedis host/port configuration
-   * @param config
-   */
-  static Set<HostAndPort> jedisHostsAndPorts(RedisConfiguration config) {
-    Set<HostAndPort> hostsAndPorts = new HashSet<>();
-    for (RedisConfiguration.HostAndPort hp : config.hostsAndPorts()) {
-      hostsAndPorts.add(new HostAndPort(hp.host, hp.port));
+    private RedisFacade singleInstance(JedisPoolConfig poolConfig, RedisConfiguration config) {
+        int port = Integer.parseInt(config.port);
+        String[] serverAndPort = config.server.split(":");
+        if (serverAndPort.length > 1) {
+            port = Integer.parseInt(serverAndPort[1]);
+        }
+        return new JedisPoolFacade(new JedisPool(poolConfig, config.server, port, config.timeout));
     }
-    return hostsAndPorts;
-  }
+
+    RedisFacade sentinelFacade(JedisPoolConfig poolConfig, RedisConfiguration config) {
+        return new JedisPoolFacade(
+                new JedisSentinelPool(config.masterName, config.sentinels(), poolConfig, config.timeout));
+    }
+
+    /**
+     * This method builds RedisFacade that connects to Redis cluster. We
+     * retrieve all IP addresses corresponding to passed DNS name and use them
+     * as cluster nodes.
+     *
+     * @param poolConfig
+     * @param config
+     * @return
+     */
+    RedisFacade clusterFacade(JedisPoolConfig poolConfig, RedisConfiguration config) {
+        return new JedisClusterFacade(
+                new TransactionalJedisCluster(jedisHostsAndPorts(config), config.timeout, poolConfig));
+    }
+
+    /**
+     * Extracts jedis host/port configuration
+     * 
+     * @param config
+     */
+    static Set<HostAndPort> jedisHostsAndPorts(RedisConfiguration config) {
+        Set<HostAndPort> hostsAndPorts = new HashSet<>();
+        for (RedisConfiguration.HostAndPort hp : config.hostsAndPorts()) {
+            hostsAndPorts.add(new HostAndPort(hp.host, hp.port));
+        }
+        return hostsAndPorts;
+    }
 }

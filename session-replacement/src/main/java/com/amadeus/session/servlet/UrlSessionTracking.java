@@ -24,53 +24,53 @@ import com.amadeus.session.SessionTracking;
  * </ul>
  */
 public class UrlSessionTracking extends BaseSessionTracking implements SessionTracking {
-  private String sessionIdPathItem;
+    private String sessionIdPathItem;
 
-  @Override
-  public void configure(SessionConfiguration configuration) {
-    super.configure(configuration);
+    @Override
+    public void configure(SessionConfiguration configuration) {
+        super.configure(configuration);
 
-    sessionIdPathItem = ";" + idName + '=';
-  }
-
-  @Override
-  public String retrieveId(RequestWithSession request) {
-    String requestUri = ((HttpServletRequest)request).getRequestURI();
-    int sessionIdStart = requestUri.lastIndexOf(sessionIdPathItem);
-    if (sessionIdStart > -1) {
-      sessionIdStart += sessionIdPathItem.length();
-      String sessionId = requestUri.substring(sessionIdStart);
-      return clean(sessionId);
-    }
-    return null;
-  }
-
-  @Override
-  public void propagateSession(RequestWithSession request, Object response) {
-    // No logic here, as the session is propagated via URL
-  }
-
-  @Override
-  public String encodeUrl(RequestWithSession request, String url) {
-    RepositoryBackedSession session = request.getRepositoryBackedSession(false);
-    if (session == null || !session.isValid()) {
-      return url;
-    }
-    String encodedSessionAlias;
-    try {
-      encodedSessionAlias = URLEncoder.encode(session.getId(), "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new IllegalStateException("This exception should never happen!", e);
+        sessionIdPathItem = ";" + idName + '=';
     }
 
-    int queryStart = url.indexOf('?');
-    if (queryStart < 0) {
-      return url + sessionIdPathItem + encodedSessionAlias;
+    @Override
+    public String retrieveId(RequestWithSession request) {
+        String requestUri = ((HttpServletRequest) request).getRequestURI();
+        int sessionIdStart = requestUri.lastIndexOf(sessionIdPathItem);
+        if (sessionIdStart > -1) {
+            sessionIdStart += sessionIdPathItem.length();
+            String sessionId = requestUri.substring(sessionIdStart);
+            return clean(sessionId);
+        }
+        return null;
     }
-    String path = url.substring(0, queryStart);
-    String query = url.substring(queryStart + 1, url.length());
-    path += sessionIdPathItem + encodedSessionAlias;
 
-    return path + '?' + query;
-  }
+    @Override
+    public void propagateSession(RequestWithSession request, Object response) {
+        // No logic here, as the session is propagated via URL
+    }
+
+    @Override
+    public String encodeUrl(RequestWithSession request, String url) {
+        RepositoryBackedSession session = request.getRepositoryBackedSession(false);
+        if (session == null || !session.isValid()) {
+            return url;
+        }
+        String encodedSessionAlias;
+        try {
+            encodedSessionAlias = URLEncoder.encode(session.getId(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalStateException("This exception should never happen!", e);
+        }
+
+        int queryStart = url.indexOf('?');
+        if (queryStart < 0) {
+            return url + sessionIdPathItem + encodedSessionAlias;
+        }
+        String path = url.substring(0, queryStart);
+        String query = url.substring(queryStart + 1, url.length());
+        path += sessionIdPathItem + encodedSessionAlias;
+
+        return path + '?' + query;
+    }
 }

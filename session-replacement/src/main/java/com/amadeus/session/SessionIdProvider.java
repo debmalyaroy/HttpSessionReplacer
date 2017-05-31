@@ -6,29 +6,29 @@ package com.amadeus.session;
  */
 public interface SessionIdProvider {
 
-  /**
-   * Generates new session id.
-   *
-   * @return new session id
-   */
-  String newId();
+    /**
+     * Generates new session id.
+     *
+     * @return new session id
+     */
+    String newId();
 
-  /**
-   * Returns cleaned session id or <code>null</code> if value has invalid id
-   * format.
-   *
-   * @param value
-   *          id read from input
-   * @return cleaned session id or <code>null</code> if value has invalid id
-   *         format
-   */
-  String readId(String value);
+    /**
+     * Returns cleaned session id or <code>null</code> if value has invalid id
+     * format.
+     *
+     * @param value
+     *            id read from input
+     * @return cleaned session id or <code>null</code> if value has invalid id
+     *         format
+     */
+    String readId(String value);
 
-  /**
-   * Configures session id provider.
-   *
-   * @param configuration
-   *          the session configuration
-   */
-  void configure(SessionConfiguration configuration);
+    /**
+     * Configures session id provider.
+     *
+     * @param configuration
+     *            the session configuration
+     */
+    void configure(SessionConfiguration configuration);
 }

@@ -22,35 +22,37 @@ import com.amadeus.session.SessionRepositoryFactory;
  * container.
  */
 public class InitializeSessionManagement implements ServletContainerInitializer {
-  private static final Logger logger = LoggerFactory.getLogger(InitializeSessionManagement.class);
+    private static final Logger logger = LoggerFactory.getLogger(InitializeSessionManagement.class);
 
-  private static boolean disabled = Boolean.parseBoolean(getPropertySecured(DISABLED_SESSION, null));
+    private static boolean disabled = Boolean.parseBoolean(getPropertySecured(DISABLED_SESSION, null));
 
-  @Override
-  public void onStartup(Set<Class<?>> classes, ServletContext context) throws ServletException {
-    // If session support is disabled, just log it
-    if (disabled || Boolean.parseBoolean(context.getInitParameter(DISABLED_SESSION))) {
-      logger.warn("Session management disabled for {}, {}, {}", context.getContextPath(), disabled,
-          context.getInitParameter(DISABLED_SESSION));
-      return;
+    @Override
+    public void onStartup(Set<Class<?>> classes, ServletContext context) throws ServletException {
+        // If session support is disabled, just log it
+        if (disabled || Boolean.parseBoolean(context.getInitParameter(DISABLED_SESSION))) {
+            logger.warn("Session management disabled for {}, {}, {}", context.getContextPath(), disabled,
+                    context.getInitParameter(DISABLED_SESSION));
+            return;
+        }
+        setupProviders(context);
+        initSessionManagement(context);
     }
-    setupProviders(context);
-    initSessionManagement(context);
-  }
 
-  /**
-   * This method will register built-in {@link SessionRepositoryFactory} classes.
-   * @param context
-   */
-  static void setupProviders(ServletContext context) {
-    HashMap<String, String> providerMapping = new HashMap<>();
-    // Register default implementations
-    providerMapping.put("redis", "com.amadeus.session.repository.redis.JedisSessionRepositoryFactory");
-    providerMapping.put("in-memory", "com.amadeus.session.repository.inmemory.InMemoryRepositoryFactory");
-    if (logger.isDebugEnabled()) {
-      logger.debug("Known session repository providers: {} for servlet context {}", providerMapping.keySet(),
-          context.getContextPath());
+    /**
+     * This method will register built-in {@link SessionRepositoryFactory}
+     * classes.
+     * 
+     * @param context
+     */
+    static void setupProviders(ServletContext context) {
+        HashMap<String, String> providerMapping = new HashMap<>();
+        // Register default implementations
+        providerMapping.put("redis", "com.amadeus.session.repository.redis.JedisSessionRepositoryFactory");
+        providerMapping.put("in-memory", "com.amadeus.session.repository.inmemory.InMemoryRepositoryFactory");
+        if (logger.isDebugEnabled()) {
+            logger.debug("Known session repository providers: {} for servlet context {}", providerMapping.keySet(),
+                    context.getContextPath());
+        }
+        context.setAttribute(PROVIDERS, providerMapping);
     }
-    context.setAttribute(PROVIDERS, providerMapping);
-  }
 }

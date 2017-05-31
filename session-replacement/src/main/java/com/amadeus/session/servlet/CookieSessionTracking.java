@@ -43,69 +43,69 @@ import com.amadeus.session.SessionTracking;
  *
  */
 class CookieSessionTracking extends BaseSessionTracking implements SessionTracking {
-  /**
-   * Used to configure context path of the cookie.
-   */
-  static final String COOKIE_CONTEXT_PATH_PARAMETER = "com.amadeus.session.cookie.contextPath";
-  /**
-   * Used to specify that cookie should be marked as secure. Secure cookies are propagated only
-   * over HTTPS.
-   */
-  static final String SECURE_COOKIE_PARAMETER = "com.amadeus.session.cookie.secure";
-  /**
-   * Used to specify that cookie should be marked as HttpOnly. Those cookies are not available
-   * to javascript.
-   */
-  static final String COOKIE_HTTP_ONLY_PARAMETER = "com.amadeus.session.cookie.httpOnly";
-  private boolean httpOnly = true;
-  private boolean contextPath = false;
-  private Boolean secure;
+    /**
+     * Used to configure context path of the cookie.
+     */
+    static final String COOKIE_CONTEXT_PATH_PARAMETER = "com.amadeus.session.cookie.contextPath";
+    /**
+     * Used to specify that cookie should be marked as secure. Secure cookies
+     * are propagated only over HTTPS.
+     */
+    static final String SECURE_COOKIE_PARAMETER = "com.amadeus.session.cookie.secure";
+    /**
+     * Used to specify that cookie should be marked as HttpOnly. Those cookies
+     * are not available to javascript.
+     */
+    static final String COOKIE_HTTP_ONLY_PARAMETER = "com.amadeus.session.cookie.httpOnly";
+    private boolean httpOnly = true;
+    private boolean contextPath = false;
+    private Boolean secure;
 
-  @Override
-  public String retrieveId(RequestWithSession request) {
-    Cookie[] cookies = ((HttpServletRequest)request).getCookies();
-    if (cookies != null) {
-      for (Cookie cookie : cookies) {
-        if (idName.equals(cookie.getName())) {
-          return clean(cookie.getValue());
+    @Override
+    public String retrieveId(RequestWithSession request) {
+        Cookie[] cookies = ((HttpServletRequest) request).getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (idName.equals(cookie.getName())) {
+                    return clean(cookie.getValue());
+                }
+            }
         }
-      }
+        return null;
     }
-    return null;
-  }
 
-  @Override
-  public void propagateSession(RequestWithSession request, Object response) {
-    Cookie cookie = new Cookie(idName, "");
-    RepositoryBackedSession session = request.getRepositoryBackedSession(false);
-    if (session != null && !session.isValid()) {
-      session = null;
+    @Override
+    public void propagateSession(RequestWithSession request, Object response) {
+        Cookie cookie = new Cookie(idName, "");
+        RepositoryBackedSession session = request.getRepositoryBackedSession(false);
+        if (session != null && !session.isValid()) {
+            session = null;
+        }
+        if (session == null) {
+            cookie.setMaxAge(0);
+        } else {
+            cookie.setValue(session.getId());
+        }
+        if (ServletLevel.isServlet3) {
+            cookie.setHttpOnly(httpOnly);
+        }
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        if (secure) {
+            cookie.setSecure(httpRequest.isSecure());
+        }
+        cookie.setPath(cookiePath(httpRequest));
+        ((HttpServletResponse) response).addCookie(cookie);
     }
-    if (session == null) {
-      cookie.setMaxAge(0);
-    } else {
-      cookie.setValue(session.getId());
-    }
-    if (ServletLevel.isServlet3) {
-      cookie.setHttpOnly(httpOnly);
-    }
-    HttpServletRequest httpRequest = (HttpServletRequest)request;
-    if (secure) {
-      cookie.setSecure(httpRequest.isSecure());
-    }
-    cookie.setPath(cookiePath(httpRequest));
-    ((HttpServletResponse)response).addCookie(cookie);
-  }
 
-  private String cookiePath(HttpServletRequest request) {
-    return contextPath ? request.getContextPath() + "/" : "/";
-  }
+    private String cookiePath(HttpServletRequest request) {
+        return contextPath ? request.getContextPath() + "/" : "/";
+    }
 
-  @Override
-  public void configure(SessionConfiguration conf) {
-    super.configure(conf);
-    httpOnly = Boolean.valueOf(conf.getAttribute(COOKIE_HTTP_ONLY_PARAMETER, "true"));
-    secure = Boolean.valueOf(conf.getAttribute(SECURE_COOKIE_PARAMETER, "false"));
-    contextPath = Boolean.valueOf(conf.getAttribute(COOKIE_CONTEXT_PATH_PARAMETER, "true"));
-  }
+    @Override
+    public void configure(SessionConfiguration conf) {
+        super.configure(conf);
+        httpOnly = Boolean.valueOf(conf.getAttribute(COOKIE_HTTP_ONLY_PARAMETER, "true"));
+        secure = Boolean.valueOf(conf.getAttribute(SECURE_COOKIE_PARAMETER, "false"));
+        contextPath = Boolean.valueOf(conf.getAttribute(COOKIE_CONTEXT_PATH_PARAMETER, "true"));
+    }
 }

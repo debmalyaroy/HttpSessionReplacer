@@ -11,13 +11,13 @@ import com.amadeus.session.SessionRepositoryFactory;
  */
 public class InMemoryRepositoryFactory implements SessionRepositoryFactory {
 
-  @Override
-  public SessionRepository repository(SessionConfiguration sessionConfiguration) {
-    return new InMemoryRepository(sessionConfiguration.getNamespace());
-  }
+    @Override
+    public SessionRepository repository(SessionConfiguration sessionConfiguration) {
+        return new InMemoryRepository(sessionConfiguration.getNamespace());
+    }
 
-  @Override
-  public boolean isDistributed() {
-    return false;
-  }
+    @Override
+    public boolean isDistributed() {
+        return false;
+    }
 }
